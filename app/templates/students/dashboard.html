@@ -1,0 +1,125 @@
+{% extends "layouts/dashboard.html" %}
+{% from "macros.html" import status_badge, empty_state %}
+
+{% block title %}My dashboard — Hostel MS{% endblock %}
+{% block page_title %}Welcome, {{ student.full_name.split(' ')[0] }}{% endblock %}
+{% block page_subtitle %}Roll {{ student.roll_number }} · {{ student.course }}{% endblock %}
+
+{% block content %}
+<div class="row g-3 mb-3">
+  <div class="col-6 col-lg-3">
+    <div class="card stat-card"><div class="card-body">
+      <div class="stat-icon bg-soft-primary"><i class="bi bi-receipt"></i></div>
+      <div class="stat-value mt-3">{{ total_billed|money }}</div>
+      <div class="stat-label">Total billed</div>
+    </div></div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card stat-card"><div class="card-body">
+      <div class="stat-icon bg-soft-success"><i class="bi bi-check2-circle"></i></div>
+      <div class="stat-value mt-3">{{ total_paid|money }}</div>
+      <div class="stat-label">Total paid</div>
+    </div></div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card stat-card"><div class="card-body">
+      <div class="stat-icon bg-soft-danger"><i class="bi bi-exclamation-circle"></i></div>
+      <div class="stat-value mt-3">{{ outstanding|money }}</div>
+      <div class="stat-label">Outstanding</div>
+    </div></div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card stat-card"><div class="card-body">
+      <div class="stat-icon bg-soft-info"><i class="bi bi-door-open"></i></div>
+      <div class="stat-value mt-3">{{ allocation.room.room_number if allocation else '—' }}</div>
+      <div class="stat-label">Current room</div>
+    </div></div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-5">
+    <div class="card h-100">
+      <div class="card-header">My room</div>
+      <div class="card-body">
+        {% if allocation %}
+          <div class="fw-semibold fs-5">{{ allocation.room.room_number }}</div>
+          <div class="text-muted-sm mb-2">{{ allocation.room.hostel.name }} · Floor {{ allocation.room.floor }}</div>
+          <div class="mb-2">{{ status_badge(allocation.room.room_type) }} Bed {{ allocation.bed_index }}</div>
+          <div class="text-muted-sm">Occupancy {{ allocation.room.occupied_beds }}/{{ allocation.room.capacity }}</div>
+          <div class="progress mt-1" style="height:8px;">
+            <div class="progress-bar" style="width: {{ allocation.room.occupancy_percent }}%"></div>
+          </div>
+          <div class="text-muted-sm mt-3">Allocated {{ allocation.allocated_at|date }}</div>
+          <a href="{{ url_for('portal.allocations') }}" class="btn btn-sm btn-outline-secondary mt-3">View allocation history</a>
+        {% else %}
+          {{ empty_state('door-closed', 'No room allocated', 'Please contact the hostel office to be assigned a room.') }}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-7">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span>Billing & dues</span>
+        <a href="{{ url_for('portal.fees') }}" class="text-decoration-none" style="font-size:.8rem;">All bills</a>
+      </div>
+      <div class="card-body">
+        {% if upcoming %}
+          <div class="alert alert-warning d-flex justify-content-between align-items-center">
+            <div>
+              <div class="fw-semibold">Upcoming {{ upcoming.period_label }} bill</div>
+              <div class="text-muted-sm">Due {{ upcoming.due_date|date }} · Balance {{ upcoming.balance|money }}</div>
+            </div>
+            {{ status_badge(upcoming.status) }}
+          </div>
+        {% endif %}
+        <div class="table-responsive">
+          <table class="table table-sm align-middle">
+            <thead><tr><th>Period</th><th>Total</th><th>Balance</th><th>Due</th><th>Status</th></tr></thead>
+            <tbody>
+              {% for f in fees[:5] %}
+              <tr>
+                <td><a href="{{ url_for('portal.fee_detail', fee_id=f.id) }}">{{ f.period_label }}</a></td>
+                <td>{{ f.total_amount|money }}</td>
+                <td>{{ f.balance|money }}</td>
+                <td>{{ f.due_date|date('%d %b') }}</td>
+                <td>{{ status_badge(f.status) }}</td>
+              </tr>
+              {% else %}
+              <tr><td colspan="5">{{ empty_state('receipt', 'No bills yet', 'Your fee statements will appear here.') }}</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card mt-3">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span>Recent payments</span>
+    <a href="{{ url_for('portal.payments') }}" class="text-decoration-none" style="font-size:.8rem;">All payments</a>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-sm align-middle">
+      <thead><tr><th>Receipt</th><th>Amount</th><th>Method</th><th>Date</th><th class="text-end">Receipt</th></tr></thead>
+      <tbody>
+        {% for p in payments %}
+        <tr>
+          <td class="mono">{{ p.receipt_no }}</td>
+          <td>{{ p.amount|money }}</td>
+          <td>{{ p.method|replace('_',' ')|title }}</td>
+          <td>{{ p.paid_at|datetime('%d %b %Y') }}</td>
+          <td class="text-end"><a class="btn btn-sm btn-outline-secondary" href="{{ url_for('portal.receipt', payment_id=p.id) }}"><i class="bi bi-download"></i></a></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5">{{ empty_state('cash-stack', 'No payments yet') }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

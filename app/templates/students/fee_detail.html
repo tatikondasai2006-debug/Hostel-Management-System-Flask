@@ -1,0 +1,65 @@
+{% extends "layouts/dashboard.html" %}
+{% from "macros.html" import status_badge %}
+
+{% block title %}{{ fee.period_label }} — Hostel MS{% endblock %}
+{% block page_title %}Fee statement — {{ fee.period_label }}{% endblock %}
+{% block page_subtitle %}Roll {{ student.roll_number }}{% endblock %}
+
+{% block content %}
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span>Charges</span>{{ status_badge(fee.status) }}
+      </div>
+      <div class="table-responsive">
+        <table class="table table-sm mb-0">
+          <tbody>
+            <tr><td>Accommodation</td><td class="text-end">{{ fee.accommodation_amount|money }}</td></tr>
+            <tr><td>Mess</td><td class="text-end">{{ fee.mess_amount|money }}</td></tr>
+            <tr><td>Laundry</td><td class="text-end">{{ fee.laundry_amount|money }}</td></tr>
+            <tr><td>Maintenance</td><td class="text-end">{{ fee.maintenance_amount|money }}</td></tr>
+            {% if fee.other_amount > 0 %}<tr><td>Other charges</td><td class="text-end">{{ fee.other_amount|money }}</td></tr>{% endif %}
+            {% if fee.discount_amount > 0 %}<tr><td class="text-success">Discount</td><td class="text-end text-success">-{{ fee.discount_amount|money }}</td></tr>{% endif %}
+            {% if fee.late_fee_amount > 0 %}<tr><td class="text-danger">Late fee</td><td class="text-end text-danger">{{ fee.late_fee_amount|money }}</td></tr>{% endif %}
+            <tr class="fw-semibold border-top"><td>Total</td><td class="text-end">{{ fee.total_amount|money }}</td></tr>
+            <tr><td>Paid</td><td class="text-end">{{ fee.amount_paid|money }}</td></tr>
+            <tr class="fw-semibold"><td>Balance</td><td class="text-end {{ 'text-danger' if fee.balance > 0 }}">{{ fee.balance|money }}</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card mb-3">
+      <div class="card-body">
+        <div class="text-muted-sm">Billing period</div>
+        <div class="fw-semibold">{{ fee.period_label }}</div>
+        <div class="text-muted-sm mt-2">Due date</div>
+        <div class="fw-semibold">{{ fee.due_date|date }}</div>
+        {% if fee.room %}<div class="text-muted-sm mt-2">Room</div><div class="fw-semibold">{{ fee.room.room_number }}</div>{% endif %}
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">Payments</div>
+      <div class="table-responsive">
+        <table class="table table-sm mb-0">
+          <thead><tr><th>Receipt</th><th>Amount</th><th>Date</th><th></th></tr></thead>
+          <tbody>
+            {% for p in fee.payments %}
+            <tr>
+              <td class="mono">{{ p.receipt_no }}</td>
+              <td>{{ p.amount|money }}</td>
+              <td>{{ p.paid_at|date }}</td>
+              <td class="text-end"><a href="{{ url_for('portal.receipt', payment_id=p.id) }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-download"></i></a></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="4" class="text-muted-sm text-center py-3">No payments recorded.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

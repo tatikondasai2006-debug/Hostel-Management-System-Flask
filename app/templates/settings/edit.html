@@ -1,0 +1,50 @@
+{% extends "layouts/dashboard.html" %}
+{% from "macros.html" import render_field %}
+
+{% block title %}Settings — Hostel MS{% endblock %}
+{% block page_title %}Settings{% endblock %}
+{% block page_subtitle %}Hostel identity and billing policy{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-body">
+        <form method="post" novalidate>
+          {{ form.hidden_tag() }}
+          <h6 class="section-title">Hostel identity</h6>
+          <p class="text-muted-sm">Shown on receipts and reports.</p>
+          <div class="row g-3">
+            {{ render_field(form.hostel_name, col="col-md-6") }}
+            {{ render_field(form.hostel_contact, col="col-md-6") }}
+            {{ render_field(form.hostel_email, col="col-md-6") }}
+            {{ render_field(form.currency_symbol, col="col-md-6") }}
+            {{ render_field(form.hostel_address, col="col-12") }}
+          </div>
+          <hr>
+          <h6 class="section-title">Late fee policy</h6>
+          <div class="row g-3">
+            {{ render_field(form.late_fee_percent, col="col-md-6", help_text="Percentage of outstanding balance.") }}
+            {{ render_field(form.late_fee_grace_days, col="col-md-6", help_text="Days after the due date before late fees apply.") }}
+          </div>
+          <div class="mt-3">{{ form.submit(class="btn btn-primary") }}</div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-header">Fee calculation rules</div>
+      <div class="card-body text-muted-sm">
+        <ul class="ps-3 mb-0">
+          <li>Accommodation = room fee or room-type structure.</li>
+          <li>Plus mess, laundry, maintenance and other charges.</li>
+          <li>Minus authorised discounts.</li>
+          <li>Late fee = % of outstanding after the grace period.</li>
+          <li>All amounts use decimal rounding (half up, 2 dp).</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

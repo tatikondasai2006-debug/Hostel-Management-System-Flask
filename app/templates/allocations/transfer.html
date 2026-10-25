@@ -1,0 +1,41 @@
+{% extends "layouts/dashboard.html" %}
+{% from "macros.html" import render_field, status_badge %}
+
+{% block title %}Transfer student — Hostel MS{% endblock %}
+{% block page_title %}Transfer {{ student.full_name }}{% endblock %}
+{% block page_subtitle %}Roll {{ student.roll_number }}{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-body">
+        <form method="post" novalidate>
+          {{ form.hidden_tag() }}
+          <div class="row g-3">
+            {{ render_field(form.room_id, col="col-12") }}
+            {{ render_field(form.notes, col="col-12") }}
+          </div>
+          <div class="d-flex gap-2 mt-3">
+            {{ form.submit(class="btn btn-primary") }}
+            <a href="{{ url_for('students.view_student', student_id=student.id) }}" class="btn btn-outline-secondary">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card">
+      <div class="card-header">Current room</div>
+      <div class="card-body">
+        {% if current %}
+          <div class="fw-semibold fs-5">{{ current.room.room_number }}</div>
+          <div class="text-muted-sm">{{ current.room.hostel.name }} · Bed {{ current.bed_index }}</div>
+        {% else %}
+          <p class="text-muted-sm mb-0">This student has no active allocation; the transfer will simply assign a room.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,179 @@
+{% extends "layouts/dashboard.html" %}
+{% from "macros.html" import status_badge, empty_state %}
+
+{% block title %}{{ student.full_name }} — Hostel MS{% endblock %}
+{% block page_title %}{{ student.full_name }}{% endblock %}
+{% block page_subtitle %}Roll {{ student.roll_number }} · {{ student.course }}{% endblock %}
+
+{% block topbar_actions %}
+  <a href="{{ url_for('students.edit_student', student_id=student.id) }}" class="btn btn-sm btn-outline-secondary btn-icon"><i class="bi bi-pencil"></i> Edit</a>
+  {% if student.current_room %}
+    <a href="{{ url_for('allocations.transfer', student_id=student.id) }}" class="btn btn-sm btn-outline-primary btn-icon"><i class="bi bi-arrow-left-right"></i> Transfer</a>
+  {% else %}
+    <a href="{{ url_for('allocations.auto_allocate') }}" class="btn btn-sm btn-primary btn-icon"><i class="bi bi-diagram-3"></i> Allocate</a>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="row g-3">
+  <div class="col-lg-4">
+    <div class="card mb-3">
+      <div class="card-body">
+        <div class="d-flex align-items-center gap-3 mb-3">
+          <div class="avatar-circle" style="width:52px;height:52px;font-size:1.25rem;">{{ student.full_name[0]|upper }}</div>
+          <div>
+            <div class="fw-semibold">{{ student.full_name }}</div>
+            <div class="text-muted-sm mono">{{ student.roll_number }}</div>
+          </div>
+        </div>
+        <dl class="row mb-0 small">
+          <dt class="col-5 text-muted">Status</dt><dd class="col-7">{{ status_badge(student.status) }}</dd>
+          <dt class="col-5 text-muted">Email</dt><dd class="col-7 text-break">{{ student.email }}</dd>
+          <dt class="col-5 text-muted">Phone</dt><dd class="col-7">{{ student.phone }}</dd>
+          <dt class="col-5 text-muted">Course</dt><dd class="col-7">{{ student.course }}</dd>
+          <dt class="col-5 text-muted">Year</dt><dd class="col-7">{{ student.academic_year }}</dd>
+          <dt class="col-5 text-muted">Admission</dt><dd class="col-7">{{ student.admission_date|date }}</dd>
+          <dt class="col-5 text-muted">Emergency</dt><dd class="col-7">{{ student.emergency_contact or '—' }}</dd>
+          <dt class="col-5 text-muted">Address</dt><dd class="col-7">{{ student.address or '—' }}</dd>
+        </dl>
+      </div>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-header">Account actions</div>
+      <div class="card-body">
+        <form method="post" action="{{ url_for('students.change_status', student_id=student.id) }}" class="d-flex gap-2">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <select name="status" class="form-select form-select-sm">
+            {% for s in ['active','inactive','archived'] %}
+              <option value="{{ s }}" {{ 'selected' if student.status == s }}>{{ s|title }}</option>
+            {% endfor %}
+          </select>
+          <button class="btn btn-sm btn-outline-primary" data-confirm="Change status and release the room if needed?">Apply</button>
+        </form>
+        <p class="text-muted-sm mt-2 mb-0">Deactivating releases the bed but preserves history. Reactivating does not bypass capacity checks.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">Fee summary</div>
+      <div class="card-body">
+        <div class="d-flex justify-content-between"><span class="text-muted-sm">Billed</span><strong>{{ student.total_billed|money }}</strong></div>
+        <div class="d-flex justify-content-between"><span class="text-muted-sm">Paid</span><strong>{{ student.total_paid|money }}</strong></div>
+        <div class="d-flex justify-content-between"><span class="text-muted-sm">Outstanding</span><strong class="text-danger">{{ student.outstanding_balance|money }}</strong></div>
+        <div class="d-flex justify-content-between mt-2"><span class="text-muted-sm">Fee status</span>{{ status_badge(student.fee_status) }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-8">
+    <div class="card mb-3">
+      <div class="card-header">Current room</div>
+      <div class="card-body">
+        {% if student.current_room %}
+          {% set alloc = student.current_allocation %}
+          <div class="row">
+            <div class="col-md-6">
+              <div class="fw-semibold fs-5">{{ student.current_room.room_number }}</div>
+              <div class="text-muted-sm">{{ student.current_room.hostel.name }} · Floor {{ student.current_room.floor }}</div>
+              <div class="mt-2">{{ status_badge(student.current_room.room_type) }} Bed {{ alloc.bed_index }}</div>
+            </div>
+            <div class="col-md-6">
+              <div class="text-muted-sm">Occupancy</div>
+              <div>{{ student.current_room.occupied_beds }}/{{ student.current_room.capacity }} beds</div>
+              <div class="progress mt-1" style="height:8px;">
+                <div class="progress-bar" style="width: {{ student.current_room.occupancy_percent }}%"></div>
+              </div>
+              <form method="post" action="{{ url_for('allocations.release', allocation_id=alloc.id) }}" class="mt-3">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="input-group input-group-sm">
+                  <input type="text" name="reason" class="form-control" placeholder="Release reason">
+                  <button class="btn btn-outline-danger" data-confirm="Release this bed?">Release</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        {% else %}
+          {{ empty_state('door-closed', 'No room allocated', 'This student has no active allocation.') }}
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-header">Fee records</div>
+      <div class="table-responsive">
+        <table class="table table-sm align-middle">
+          <thead><tr><th>Period</th><th>Total</th><th>Paid</th><th>Balance</th><th>Due</th><th>Status</th><th></th></tr></thead>
+          <tbody>
+            {% for f in fees %}
+            <tr>
+              <td>{{ f.period_label }}</td>
+              <td>{{ f.total_amount|money }}</td>
+              <td>{{ f.amount_paid|money }}</td>
+              <td>{{ f.balance|money }}</td>
+              <td>{{ f.due_date|date('%d %b %Y') }}</td>
+              <td>{{ status_badge(f.status) }}</td>
+              <td class="text-end">
+                <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('fees.view_fee', fee_id=f.id) }}"><i class="bi bi-eye"></i></a>
+                {% if f.balance > 0 %}
+                <a class="btn btn-sm btn-outline-primary" href="{{ url_for('payments.record_payment', fee_id=f.id) }}"><i class="bi bi-cash"></i></a>
+                {% endif %}
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="7">{{ empty_state('receipt', 'No fee records', 'Generate bills from the Fees page.') }}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-header">Payment history</div>
+      <div class="table-responsive">
+        <table class="table table-sm align-middle">
+          <thead><tr><th>Receipt</th><th>Amount</th><th>Method</th><th>Date</th><th>Status</th><th></th></tr></thead>
+          <tbody>
+            {% for p in payments %}
+            <tr>
+              <td class="mono">{{ p.receipt_no }}</td>
+              <td>{{ p.amount|money }}</td>
+              <td>{{ p.method|replace('_',' ')|title }}</td>
+              <td>{{ p.paid_at|datetime('%d %b %Y %H:%M') }}</td>
+              <td>{{ status_badge(p.status) }}</td>
+              <td class="text-end">
+                <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('payments.receipt', payment_id=p.id) }}" title="Receipt"><i class="bi bi-file-earmark-pdf"></i></a>
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6">{{ empty_state('cash-stack', 'No payments', 'Payments recorded for this student appear here.') }}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">Allocation history</div>
+      <div class="table-responsive">
+        <table class="table table-sm align-middle">
+          <thead><tr><th>Room</th><th>Bed</th><th>Allocated</th><th>Released</th><th>Status</th></tr></thead>
+          <tbody>
+            {% for a in allocations %}
+            <tr>
+              <td>{{ a.room.room_number if a.room }} <span class="text-muted-sm">{{ a.room.hostel.name if a.room and a.room.hostel }}</span></td>
+              <td>{{ a.bed_index }}</td>
+              <td>{{ a.allocated_at|datetime('%d %b %Y %H:%M') }}</td>
+              <td>{{ a.released_at|datetime('%d %b %Y %H:%M') if a.released_at else '—' }}</td>
+              <td>{{ status_badge(a.status) }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5">{{ empty_state('diagram-3', 'No allocation history') }}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

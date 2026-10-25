@@ -1,0 +1,34 @@
+{% extends "layouts/dashboard.html" %}
+{% from "macros.html" import status_badge, empty_state %}
+
+{% block title %}My fees — Hostel MS{% endblock %}
+{% block page_title %}My fees{% endblock %}
+{% block page_subtitle %}Billing statements and dues{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="table-responsive">
+    <table class="table align-middle">
+      <thead><tr><th>Period</th><th>Accommodation</th><th>Other charges</th><th>Late fee</th><th>Total</th><th>Paid</th><th>Balance</th><th>Due</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+        {% for f in records %}
+        <tr>
+          <td class="fw-semibold">{{ f.period_label }}</td>
+          <td>{{ f.accommodation_amount|money }}</td>
+          <td>{{ (f.mess_amount + f.laundry_amount + f.maintenance_amount + f.other_amount - f.discount_amount)|money }}</td>
+          <td>{{ f.late_fee_amount|money }}</td>
+          <td>{{ f.total_amount|money }}</td>
+          <td>{{ f.amount_paid|money }}</td>
+          <td class="{{ 'text-danger' if f.balance > 0 }}">{{ f.balance|money }}</td>
+          <td>{{ f.due_date|date('%d %b %Y') }}</td>
+          <td>{{ status_badge(f.status) }}</td>
+          <td class="text-end"><a class="btn btn-sm btn-outline-secondary" href="{{ url_for('portal.fee_detail', fee_id=f.id) }}">Details</a></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="10">{{ empty_state('receipt', 'No fee records', 'Your billing statements will appear here once generated.') }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

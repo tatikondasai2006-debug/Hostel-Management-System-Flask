@@ -1,0 +1,97 @@
+{% macro render_field(field, placeholder='', help_text='', col='') %}
+  <div class="{{ col }}">
+    {{ field.label(class="form-label" + (" required" if field.flags.required else "")) }}
+    {% set classes = "form-control" %}
+    {% if field.type in ['SelectField', 'SelectMultipleField'] %}{% set classes = "form-select" %}{% endif %}
+    {% if field.type == 'BooleanField' %}
+      <div class="form-check mt-1">
+        {{ field(class="form-check-input") }}
+        {{ field.label(class="form-check-label") }}
+      </div>
+    {% else %}
+      {{ field(class=classes + (" is-invalid" if field.errors else ""), placeholder=placeholder) }}
+    {% endif %}
+    {% if help_text %}<div class="form-text">{{ help_text }}</div>{% endif %}
+    {% for error in field.errors %}
+      <div class="invalid-feedback d-block">{{ error }}</div>
+    {% endfor %}
+  </div>
+{% endmacro %}
+
+{% macro ops_tabs(active) %}
+<nav class="hms-tabs" aria-label="Operations">
+  {% set tabs = [
+    ('students', 'students.list_students', 'Students'),
+    ('hostels', 'hostels.list_hostels', 'Hostels'),
+    ('rooms', 'rooms.list_rooms', 'Rooms'),
+    ('allocations', 'allocations.list_allocations', 'Allocations'),
+  ] %}
+  {% for key, endpoint, label in tabs %}
+    <a href="{{ url_for(endpoint) }}"
+       class="{{ 'active' if active == key else '' }}"
+       {{ 'aria-current="page"'|safe if active == key else '' }}>{{ label }}</a>
+  {% endfor %}
+</nav>
+{% endmacro %}
+
+{% macro status_badge(value) %}
+  <span class="badge text-bg-{{ value|status_class }}">{{ value|replace('_', ' ')|title }}</span>
+{% endmacro %}
+
+{% macro empty_state(icon, title, text='') %}
+  <div class="empty-state">
+    <i class="bi bi-{{ icon }}"></i>
+    <h6>{{ title }}</h6>
+    {% if text %}<p class="mb-0 text-muted-sm">{{ text }}</p>{% endif %}
+  </div>
+{% endmacro %}
+
+{% macro render_pagination(pagination, endpoint) %}
+  {% if pagination and pagination.pages > 1 %}
+    {% set args = request.args.to_dict(flat=True) %}
+    {% set _ = args.pop('page', None) %}
+    <nav class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3">
+      <span class="text-muted-sm">
+        Showing {{ pagination.first }}–{{ pagination.last }} of {{ pagination.total }}
+      </span>
+      <ul class="pagination pagination-sm mb-0">
+        <li class="page-item {{ 'disabled' if not pagination.has_prev }}">
+          <a class="page-link" href="{{ url_for(endpoint, page=pagination.prev_num, **args) if pagination.has_prev else '#' }}">
+            <i class="bi bi-chevron-left"></i>
+          </a>
+        </li>
+        {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+          {% if p %}
+            <li class="page-item {{ 'active' if p == pagination.page }}">
+              <a class="page-link" href="{{ url_for(endpoint, page=p, **args) }}">{{ p }}</a>
+            </li>
+          {% else %}
+            <li class="page-item disabled"><span class="page-link">…</span></li>
+          {% endif %}
+        {% endfor %}
+        <li class="page-item {{ 'disabled' if not pagination.has_next }}">
+          <a class="page-link" href="{{ url_for(endpoint, page=pagination.next_num, **args) if pagination.has_next else '#' }}">
+            <i class="bi bi-chevron-right"></i>
+          </a>
+        </li>
+      </ul>
+    </nav>
+  {% elif pagination %}
+    <div class="text-muted-sm mt-3">Showing {{ pagination.total }} record(s)</div>
+  {% endif %}
+{% endmacro %}
+
+{% macro flash_messages() %}
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="mb-3">
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category if category != 'message' else 'info' }} alert-dismissible fade show alert-auto-dismiss mb-2" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+{% endmacro %}

@@ -1,0 +1,56 @@
+{% extends "layouts/dashboard.html" %}
+{% from "macros.html" import empty_state %}
+
+{% block title %}{{ report.title }} — Hostel MS{% endblock %}
+{% block page_title %}{{ report.title }}{% endblock %}
+{% block page_subtitle %}{{ report.rows|length }} row(s){% endblock %}
+
+{% block topbar_actions %}
+  <a href="{{ url_for('reports.export_csv', slug=report.slug, **filters.to_dict(flat=True)) }}" class="btn btn-sm btn-outline-secondary btn-icon"><i class="bi bi-filetype-csv"></i> Export CSV</a>
+  <a href="{{ url_for('reports.index') }}" class="btn btn-sm btn-outline-secondary">All reports</a>
+{% endblock %}
+
+{% block content %}
+{% if report.slug == 'payment-history' %}
+<div class="card mb-3">
+  <div class="card-body">
+    <form method="get" class="quick-filters">
+      <div>
+        <label class="form-label">From</label>
+        <input type="date" name="start_date" value="{{ filters.get('start_date','') }}" class="form-control">
+      </div>
+      <div>
+        <label class="form-label">To</label>
+        <input type="date" name="end_date" value="{{ filters.get('end_date','') }}" class="form-control">
+      </div>
+      <div>
+        <label class="form-label">Method</label>
+        <select name="method" class="form-select">
+          <option value="">Any</option>
+          {% for m in ['cash','card','bank_transfer','upi','cheque'] %}<option value="{{ m }}" {{ 'selected' if filters.get('method') == m }}>{{ m|replace('_',' ')|title }}</option>{% endfor %}
+        </select>
+      </div>
+      <button class="btn btn-primary" type="submit"><i class="bi bi-funnel"></i> Apply</button>
+      <a href="{{ url_for('reports.view', slug=report.slug) }}" class="btn btn-outline-secondary">Reset</a>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-sm align-middle table-striped">
+      <thead>
+        <tr>{% for h in report.headers %}<th>{{ h }}</th>{% endfor %}</tr>
+      </thead>
+      <tbody>
+        {% for row in report.rows %}
+        <tr>{% for h in report.headers %}<td>{{ row[h] }}</td>{% endfor %}</tr>
+        {% else %}
+        <tr><td colspan="{{ report.headers|length }}">{{ empty_state('clipboard-x', 'No data', 'No records match this report.') }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

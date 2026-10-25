@@ -1,0 +1,29 @@
+{% extends "layouts/dashboard.html" %}
+{% from "macros.html" import render_field %}
+
+{% block title %}Assign room — Hostel MS{% endblock %}
+{% block page_title %}Assign a specific room{% endblock %}
+{% block page_subtitle %}Manual allocation with capacity checks{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-body">
+        <form method="post" novalidate>
+          {{ form.hidden_tag() }}
+          <div class="row g-3">
+            {{ render_field(form.student_id, col="col-12") }}
+            {{ render_field(form.room_id, col="col-12") }}
+            {{ render_field(form.notes, col="col-12") }}
+          </div>
+          <div class="d-flex gap-2 mt-3">
+            {{ form.submit(class="btn btn-primary") }}
+            <a href="{{ url_for('allocations.list_allocations') }}" class="btn btn-outline-secondary">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

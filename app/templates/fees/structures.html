@@ -1,0 +1,31 @@
+{% extends "layouts/dashboard.html" %}
+{% from "macros.html" import empty_state %}
+
+{% block title %}Fee structures — Hostel MS{% endblock %}
+{% block page_title %}Fee structures{% endblock %}
+{% block page_subtitle %}Configurable pricing by room type{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="table-responsive">
+    <table class="table align-middle">
+      <thead><tr><th>Room type</th><th>Accommodation</th><th>Mess</th><th>Laundry</th><th>Maintenance</th><th>Description</th><th class="text-end"></th></tr></thead>
+      <tbody>
+        {% for s in structures %}
+        <tr>
+          <td class="fw-semibold">{{ s.room_type|title }}</td>
+          <td>{{ s.monthly_amount|money }}</td>
+          <td>{{ s.mess_amount|money }}</td>
+          <td>{{ s.laundry_amount|money }}</td>
+          <td>{{ s.maintenance_amount|money }}</td>
+          <td class="text-muted-sm">{{ s.description or '—' }}</td>
+          <td class="text-end"><a class="btn btn-sm btn-outline-secondary" href="{{ url_for('fees.edit_structure', structure_id=s.id) }}">Edit</a></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7">{{ empty_state('sliders', 'No fee structures', 'Run the seed-defaults command.') }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

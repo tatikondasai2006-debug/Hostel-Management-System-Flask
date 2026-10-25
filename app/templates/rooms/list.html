@@ -1,0 +1,83 @@
+{% extends "layouts/dashboard.html" %}
+{% from "macros.html" import render_pagination, status_badge, empty_state, ops_tabs %}
+
+{% block title %}Rooms — Hostel MS{% endblock %}
+{% block page_title %}Rooms{% endblock %}
+{% block page_subtitle %}{{ pagination.total }} room(s){% endblock %}
+
+{% block topbar_actions %}
+  <a href="{{ url_for('hostels.list_hostels') }}" class="btn btn-sm btn-outline-secondary btn-icon"><i class="bi bi-building"></i> Hostels</a>
+  <a href="{{ url_for('rooms.create_room') }}" class="btn btn-sm btn-primary btn-icon"><i class="bi bi-plus-lg"></i> New room</a>
+{% endblock %}
+
+{% block content %}
+{{ ops_tabs('rooms') }}
+<div class="card mb-3">
+  <div class="card-body">
+    <form method="get" class="quick-filters">
+      <div>
+        <label class="form-label">Room number</label>
+        <input type="search" name="q" value="{{ filters.get('q','') }}" class="form-control" placeholder="e.g. A-101">
+      </div>
+      <div>
+        <label class="form-label">Hostel</label>
+        <select name="hostel_id" class="form-select" data-auto-submit>
+          <option value="">All hostels</option>
+          {% for h in hostels %}<option value="{{ h.id }}" {{ 'selected' if filters.get('hostel_id') == h.id|string }}>{{ h.name }}</option>{% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="form-label">Type</label>
+        <select name="room_type" class="form-select" data-auto-submit>
+          <option value="">All types</option>
+          {% for t in room_types %}<option value="{{ t }}" {{ 'selected' if filters.get('room_type') == t }}>{{ t|title }}</option>{% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="form-label">Status</label>
+        <select name="status" class="form-select" data-auto-submit>
+          <option value="">Any</option>
+          {% for s in ['available','maintenance','unavailable'] %}<option value="{{ s }}" {{ 'selected' if filters.get('status') == s }}>{{ s|title }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="d-flex gap-2">
+        <button class="btn btn-primary" type="submit"><i class="bi bi-funnel"></i></button>
+        <a href="{{ url_for('rooms.list_rooms') }}" class="btn btn-outline-secondary">Reset</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table align-middle">
+      <thead><tr><th>Room</th><th>Hostel</th><th>Type</th><th>Floor</th><th>Occupancy</th><th>Monthly fee</th><th>Status</th><th class="text-end">Actions</th></tr></thead>
+      <tbody>
+        {% for r in rooms %}
+        <tr>
+          <td class="fw-semibold">{{ r.room_number }}</td>
+          <td>{{ r.hostel.name }}</td>
+          <td>{{ r.room_type|title }}</td>
+          <td>{{ r.floor }}</td>
+          <td>
+            {{ r.occupied_beds }}/{{ r.capacity }}
+            <div class="progress mt-1" style="height:5px;">
+              <div class="progress-bar" style="width: {{ r.occupancy_percent }}%"></div>
+            </div>
+          </td>
+          <td>{{ r.base_fee|money }}</td>
+          <td>{{ status_badge(r.display_status) }}</td>
+          <td class="text-end table-fixed-actions">
+            <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('rooms.view_room', room_id=r.id) }}"><i class="bi bi-eye"></i></a>
+            <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('rooms.edit_room', room_id=r.id) }}"><i class="bi bi-pencil"></i></a>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8">{{ empty_state('door-open', 'No rooms found', 'Create a hostel and add rooms.') }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="card-body pt-0">{{ render_pagination(pagination, 'rooms.list_rooms') }}</div>
+</div>
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}500 — Server error{% endblock %}
+{% block body %}
+<div class="auth-wrapper">
+  <main class="auth-panel mx-auto">
+    <div class="error-page text-center">
+      <div class="error-code">500</div>
+      <h4>Something went wrong</h4>
+      <p class="text-muted">{{ message or 'An unexpected error occurred. The incident has been logged.' }}</p>
+      <a href="{{ url_for('index') }}" class="btn btn-primary">Back to home</a>
+    </div>
+  </main>
+</div>
+{% endblock %}

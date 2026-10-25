@@ -1,0 +1,53 @@
+{% extends "layouts/dashboard.html" %}
+{% from "macros.html" import render_pagination, empty_state %}
+
+{% block title %}Audit log — Hostel MS{% endblock %}
+{% block page_title %}Audit log{% endblock %}
+{% block page_subtitle %}{{ pagination.total }} event(s){% endblock %}
+
+{% block content %}
+<div class="card mb-3">
+  <div class="card-body">
+    <form method="get" class="quick-filters">
+      <div>
+        <label class="form-label">Action</label>
+        <select name="action" class="form-select" data-auto-submit>
+          <option value="">All</option>
+          {% for a in actions %}<option value="{{ a }}" {{ 'selected' if filters.get('action') == a }}>{{ a }}</option>{% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="form-label">Entity</label>
+        <select name="entity_type" class="form-select" data-auto-submit>
+          <option value="">All</option>
+          {% for e in entities %}<option value="{{ e }}" {{ 'selected' if filters.get('entity_type') == e }}>{{ e }}</option>{% endfor %}
+        </select>
+      </div>
+      <a href="{{ url_for('admin.audit_log') }}" class="btn btn-outline-secondary">Reset</a>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-sm align-middle">
+      <thead><tr><th>When</th><th>Actor</th><th>Action</th><th>Entity</th><th>Details</th><th>IP</th></tr></thead>
+      <tbody>
+        {% for log in logs %}
+        <tr>
+          <td class="text-nowrap">{{ log.created_at|datetime('%d %b %Y %H:%M') }}</td>
+          <td>{{ log.actor_label or 'system' }}</td>
+          <td><span class="badge text-bg-light">{{ log.action }}</span></td>
+          <td>{{ log.entity_type }}{% if log.entity_id %} #{{ log.entity_id }}{% endif %}</td>
+          <td class="text-muted-sm mono" style="max-width:360px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ log.details or '' }}</td>
+          <td class="text-muted-sm">{{ log.ip_address or '' }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6">{{ empty_state('shield-check', 'No audit events') }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="card-body pt-0">{{ render_pagination(pagination, 'admin.audit_log') }}</div>
+</div>
+{% endblock %}

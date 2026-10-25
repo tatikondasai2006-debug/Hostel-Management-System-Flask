@@ -1,0 +1,266 @@
+{% extends "layouts/dashboard.html" %}
+{% from "macros.html" import status_badge, empty_state %}
+
+{% block title %}Dashboard — Hostel MS{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block page_subtitle %}Live occupancy and finance overview{% endblock %}
+
+{% block topbar_actions %}
+  <a href="{{ url_for('students.create_student') }}" class="btn btn-sm btn-primary btn-icon">
+    <i class="bi bi-person-plus"></i> New student
+  </a>
+  <a href="{{ url_for('allocations.auto_allocate') }}" class="btn btn-sm btn-outline-primary btn-icon">
+    <i class="bi bi-diagram-3"></i> Allocate room
+  </a>
+{% endblock %}
+
+{% block content %}
+<div class="row g-3 mb-3">
+  {% set cards = [
+    ('Total students', stats.total_students, 'people', 'bg-soft-primary', 'all records', 'students.list_students'),
+    ('Active students', stats.active_students, 'person-check', 'bg-soft-success', stats.inactive_students ~ ' inactive', 'students.list_students'),
+    ('Total rooms', stats.total_rooms, 'door-open', 'bg-soft-info', stats.total_capacity ~ ' beds', 'rooms.list_rooms'),
+    ('Occupied beds', stats.occupied_beds, 'bed', 'bg-soft-warning', '%s%% occupancy'|format(stats.occupancy_percent), None),
+    ('Available beds', stats.available_beds, 'check2-circle', 'bg-soft-success', 'ready to allocate', 'rooms.list_rooms'),
+    ('Outstanding dues', stats.total_outstanding|money, 'exclamation-triangle', 'bg-soft-danger', stats.overdue_records ~ ' overdue', 'reports.view'),
+  ] %}
+  {% for label, value, icon, tone, meta, link in cards %}
+  <div class="col-6 col-md-4 col-xl-2">
+    <div class="card stat-card h-100">
+      <div class="card-body">
+        <div class="d-flex align-items-start justify-content-between">
+          <div class="stat-icon {{ tone }}"><i class="bi bi-{{ icon }}"></i></div>
+        </div>
+        <div class="stat-value mt-3">{{ value }}</div>
+        <div class="stat-label">{{ label }}</div>
+        <div class="stat-meta mt-1">
+          {% if link and link != 'reports.view' %}<a href="{{ url_for(link) }}" class="text-decoration-none">{{ meta }}</a>
+          {% else %}{{ meta }}{% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-lg-3">
+    <div class="card h-100">
+      <div class="card-header">Monthly fee collection</div>
+      <div class="card-body d-flex flex-column justify-content-center">
+        <div class="stat-value">{{ stats.monthly_collection|money }}</div>
+        <div class="text-muted-sm">Collected this month</div>
+        <hr>
+        <div class="stat-value" style="font-size:1.2rem;">{{ stats.total_collected|money }}</div>
+        <div class="text-muted-sm">All-time collected</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-5">
+    <div class="card h-100">
+      <div class="card-header">Occupancy by room type</div>
+      <div class="card-body">
+        <div class="chart-wrap"><canvas id="chartRoomType"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card h-100">
+      <div class="card-header">Occupancy by hostel</div>
+      <div class="card-body">
+        <div class="chart-wrap"><canvas id="chartHostel"></canvas></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-4">
+    <div class="card h-100">
+      <div class="card-header">Paid vs pending</div>
+      <div class="card-body">
+        <div class="chart-wrap-sm"><canvas id="chartPaidPending"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span>Recent payments</span>
+        <a href="{{ url_for('payments.list_payments') }}" class="text-decoration-none" style="font-size:.8rem;">View all</a>
+      </div>
+      <div class="card-body pt-2">
+        {% if stats.recent_payments %}
+          <ul class="timeline">
+            {% for p in stats.recent_payments %}
+            <li>
+              <div class="tl-title">{{ p.student.full_name if p.student else '—' }}</div>
+              <div class="tl-meta">
+                {{ p.amount|money }} · {{ p.method|replace('_',' ')|title }} · {{ p.paid_at|datetime('%d %b, %H:%M') }}
+              </div>
+            </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          {{ empty_state('cash-stack', 'No payments yet', 'Recorded payments appear here.') }}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span>Recent allocations</span>
+        <a href="{{ url_for('allocations.list_allocations') }}" class="text-decoration-none" style="font-size:.8rem;">View all</a>
+      </div>
+      <div class="card-body pt-2">
+        {% if stats.recent_allocations %}
+          <ul class="timeline">
+            {% for a in stats.recent_allocations %}
+            <li>
+              <div class="tl-title">{{ a.student.full_name if a.student else '—' }} → {{ a.room.room_number if a.room else '—' }}</div>
+              <div class="tl-meta">Bed {{ a.bed_index }} · {{ a.allocated_at|datetime('%d %b, %H:%M') }} · {{ status_badge(a.status) }}</div>
+            </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          {{ empty_state('diagram-3', 'No allocations yet', 'Allocate a room to get started.') }}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mt-1">
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-header">Fee collection trend</div>
+      <div class="card-body">
+        <div class="chart-wrap"><canvas id="chartTrend"></canvas></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-header">Outstanding dues by status</div>
+      <div class="card-body">
+        <div class="row text-center">
+          <div class="col-6 border-end">
+            <div class="stat-value" style="font-size:1.25rem;">{{ stats.overdue_records }}</div>
+            <div class="text-muted-sm">Overdue bills</div>
+          </div>
+          <div class="col-6">
+            <div class="stat-value" style="font-size:1.25rem;">{{ stats.total_outstanding|money }}</div>
+            <div class="text-muted-sm">Total outstanding</div>
+          </div>
+        </div>
+        <hr>
+        <div class="d-grid gap-2">
+          <a class="btn btn-sm btn-outline-danger btn-icon" href="{{ url_for('reports.view', slug='overdue-payments') }}">
+            <i class="bi bi-exclamation-circle"></i> Overdue payments report
+          </a>
+          <a class="btn btn-sm btn-outline-primary btn-icon" href="{{ url_for('reports.view', slug='pending-dues') }}">
+            <i class="bi bi-hourglass-split"></i> Pending dues report
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+  const charts = {{ charts_json|safe }};
+  const palette = window.HMS.palette;
+
+  function barChart(id, data, opts) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    new Chart(el, {
+      type: 'bar',
+      data: data,
+      options: Object.assign({
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+      }, opts || {})
+    });
+  }
+
+  function stackedOccupancy(id, rows) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const labels = rows.map(r => r.label);
+    new Chart(el, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [
+          { label: 'Occupied', data: rows.map(r => r.occupied), backgroundColor: palette.primary, borderRadius: 5 },
+          { label: 'Available', data: rows.map(r => r.available), backgroundColor: palette.muted, borderRadius: 5 }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom' } },
+        scales: {
+          x: { stacked: true, grid: { display: false } },
+          y: { stacked: true, beginAtZero: true, ticks: { precision: 0 } }
+        }
+      }
+    });
+  }
+
+  stackedOccupancy('chartRoomType', charts.byRoomType);
+
+  const hostelEl = document.getElementById('chartHostel');
+  if (hostelEl && charts.byHostel.length) {
+    new Chart(hostelEl, {
+      type: 'doughnut',
+      data: {
+        labels: charts.byHostel.map(r => r.label),
+        datasets: [{ data: charts.byHostel.map(r => r.occupied),
+          backgroundColor: [palette.primary, palette.success, palette.info, palette.warning],
+          borderWidth: 0 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, cutout: '62%',
+        plugins: { legend: { position: 'bottom' } }
+      }
+    });
+  }
+
+  const ppEl = document.getElementById('chartPaidPending');
+  if (ppEl) {
+    new Chart(ppEl, {
+      type: 'doughnut',
+      data: {
+        labels: ['Collected', 'Pending'],
+        datasets: [{ data: [charts.paidVsPending.paid, charts.paidVsPending.pending],
+          backgroundColor: [palette.success, palette.warning], borderWidth: 0 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, cutout: '62%',
+        plugins: {
+          legend: { position: 'bottom' },
+          tooltip: { callbacks: { label: c => window.HMS.formatMoney(c.parsed) } }
+        }
+      }
+    });
+  }
+
+  barChart('chartTrend', {
+    labels: charts.monthlyTrend.labels,
+    datasets: [{ label: 'Collected', data: charts.monthlyTrend.values,
+      backgroundColor: palette.primary, borderRadius: 6 }]
+  }, { plugins: { legend: { display: false },
+    tooltip: { callbacks: { label: c => window.HMS.formatMoney(c.parsed.y) } } } });
+</script>
+{% endblock %}

@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% from "macros.html" import render_field, flash_messages %}
+
+{% block title %}Create account — Hostel MS{% endblock %}
+{% block body_class %}hms-auth{% endblock %}
+
+{% block body %}
+<div class="auth-wrapper">
+  <aside class="auth-aside">
+    <canvas class="auth-hero-canvas" data-hms-hero aria-hidden="true"></canvas>
+    <div class="auth-aside-inner">
+      <div class="auth-promo">
+        <img class="auth-brand"
+             src="{{ url_for('static', filename='img/hostelms-logo.png') }}"
+             alt="HostelMS — Hostel Management System"
+             onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+        <span class="auth-brand-fallback" style="display:none;">
+          <span class="logo"><i class="bi bi-buildings"></i></span>
+          <span>Hostel<span style="color:#93b4f5;">MS</span></span>
+        </span>
+      </div>
+      <h1>Student registration</h1>
+      <p class="tagline mt-1">Manage • Allocate • Grow Together</p>
+      <p class="text-white-50 auth-subtext mt-2">Create your account to view your room, fee statements, and download payment receipts.</p>
+      <div class="feature mt-4">
+        <i class="bi bi-check2-circle"></i>
+        <div><div class="fw-semibold">Instant profile</div>
+          <div class="text-white-50">Your details are validated server-side.</div></div>
+      </div>
+      <div class="feature">
+        <i class="bi bi-file-earmark-pdf"></i>
+        <div><div class="fw-semibold">Receipts on demand</div>
+          <div class="text-white-50">Download PDF receipts for every payment.</div></div>
+      </div>
+    </div>
+  </aside>
+  <main class="auth-panel">
+    <div class="auth-card">
+      <div class="card">
+        <div class="card-body p-4 p-md-5">
+          <h4 class="fw-semibold">Create your account</h4>
+          <p class="text-muted-sm mb-4">Administrator accounts cannot be created here.</p>
+          {{ flash_messages() }}
+          <form method="post" novalidate>
+            {{ form.hidden_tag() }}
+            <div class="row g-3">
+              {{ render_field(form.full_name, placeholder="Full name", col="col-md-6") }}
+              {{ render_field(form.roll_number, placeholder="e.g. CS2025014", col="col-md-6") }}
+              {{ render_field(form.email, placeholder="you@example.com", col="col-md-6") }}
+              {{ render_field(form.phone, placeholder="Phone number", col="col-md-6") }}
+              {{ render_field(form.course, placeholder="e.g. B.Tech Computer Science", col="col-md-7") }}
+              {{ render_field(form.academic_year, placeholder="e.g. 1", col="col-md-5") }}
+              {{ render_field(form.address, placeholder="Home address (optional)", col="col-12") }}
+              {{ render_field(form.emergency_contact, placeholder="Emergency contact (optional)", col="col-md-6") }}
+              <div class="col-12"><div class="form-text mb-2">Password must be 8+ characters and contain both letters and numbers.</div></div>
+              {{ render_field(form.password, placeholder="Password", col="col-md-6") }}
+              {{ render_field(form.confirm_password, placeholder="Repeat password", col="col-md-6") }}
+            </div>
+            <div class="d-grid mt-3">
+              {{ form.submit(class="btn btn-primary") }}
+            </div>
+          </form>
+          <div class="text-center mt-4">
+            <span class="text-muted-sm">Already registered?</span>
+            <a href="{{ url_for('auth.login') }}">Sign in</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+{% endblock %}

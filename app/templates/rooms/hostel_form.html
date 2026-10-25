@@ -1,0 +1,29 @@
+{% extends "layouts/dashboard.html" %}
+{% from "macros.html" import render_field %}
+
+{% block title %}{{ 'Edit' if hostel else 'New' }} hostel — Hostel MS{% endblock %}
+{% block page_title %}{{ 'Edit hostel' if hostel else 'New hostel' }}{% endblock %}
+{% block page_subtitle %}{{ hostel.name if hostel else 'Create a hostel building' }}{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-body">
+        <form method="post" novalidate>
+          {{ form.hidden_tag() }}
+          <div class="row g-3">
+            {{ render_field(form.name, col="col-12") }}
+            {{ render_field(form.address, col="col-12") }}
+            {{ render_field(form.description, col="col-12") }}
+          </div>
+          <div class="d-flex gap-2 mt-3">
+            {{ form.submit(class="btn btn-primary") }}
+            <a href="{{ url_for('hostels.list_hostels') }}" class="btn btn-outline-secondary">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

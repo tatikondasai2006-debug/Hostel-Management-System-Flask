@@ -1,0 +1,44 @@
+{% extends "layouts/dashboard.html" %}
+{% from "macros.html" import render_field %}
+
+{% block title %}{{ 'Edit' if room else 'New' }} room — Hostel MS{% endblock %}
+{% block page_title %}{{ 'Edit room' if room else 'New room' }}{% endblock %}
+{% block page_subtitle %}{{ room.hostel.name ~ ' / ' ~ room.room_number if room else 'Add a room to a hostel' }}{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-body">
+        <form method="post" novalidate>
+          {{ form.hidden_tag() }}
+          <div class="row g-3">
+            {{ render_field(form.hostel_id, col="col-md-6") }}
+            {{ render_field(form.room_number, col="col-md-6") }}
+            {{ render_field(form.floor, col="col-md-4") }}
+            {{ render_field(form.room_type, col="col-md-4") }}
+            {{ render_field(form.capacity, col="col-md-4", help_text="Cannot be reduced below current occupancy.") }}
+            {{ render_field(form.base_fee, col="col-md-6", help_text="Used for billing unless a fee structure applies.") }}
+            {{ render_field(form.status, col="col-md-6") }}
+            {{ render_field(form.amenities, col="col-12") }}
+          </div>
+          <div class="d-flex gap-2 mt-3">
+            {{ form.submit(class="btn btn-primary") }}
+            <a href="{{ url_for('rooms.view_room', room_id=room.id) if room else url_for('rooms.list_rooms') }}" class="btn btn-outline-secondary">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-header">Status options</div>
+      <div class="card-body text-muted-sm">
+        <p><strong>Available</strong> — open to allocations.</p>
+        <p><strong>Maintenance</strong> — temporarily closed, excluded from allocation.</p>
+        <p class="mb-0"><strong>Unavailable</strong> — permanently closed to new allocations.</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

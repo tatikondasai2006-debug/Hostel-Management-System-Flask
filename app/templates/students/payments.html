@@ -1,0 +1,35 @@
+{% extends "layouts/dashboard.html" %}
+{% from "macros.html" import status_badge, empty_state %}
+
+{% block title %}My payments — Hostel MS{% endblock %}
+{% block page_title %}My payments{% endblock %}
+{% block page_subtitle %}Payment history and receipts{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="table-responsive">
+    <table class="table align-middle">
+      <thead><tr><th>Receipt no</th><th>Reference</th><th>Amount</th><th>Method</th><th>Date</th><th>Status</th><th class="text-end">Receipt</th></tr></thead>
+      <tbody>
+        {% for p in payments %}
+        <tr>
+          <td class="mono">{{ p.receipt_no }}</td>
+          <td class="mono text-muted-sm">{{ p.reference }}</td>
+          <td>{{ p.amount|money }}</td>
+          <td>{{ p.method|replace('_',' ')|title }}</td>
+          <td>{{ p.paid_at|datetime('%d %b %Y %H:%M') }}</td>
+          <td>{{ status_badge(p.status) }}</td>
+          <td class="text-end">
+            <a class="btn btn-sm btn-outline-secondary btn-icon" href="{{ url_for('portal.receipt', payment_id=p.id) }}">
+              <i class="bi bi-file-earmark-pdf"></i> PDF
+            </a>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7">{{ empty_state('cash-stack', 'No payments yet', 'Your receipts will appear here after payments are recorded.') }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

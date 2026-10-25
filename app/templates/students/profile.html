@@ -1,0 +1,47 @@
+{% extends "layouts/dashboard.html" %}
+{% from "macros.html" import status_badge %}
+
+{% block title %}My profile — Hostel MS{% endblock %}
+{% block page_title %}My profile{% endblock %}
+{% block page_subtitle %}Personal and academic details{% endblock %}
+
+{% block topbar_actions %}
+  <a href="{{ url_for('portal.edit_profile') }}" class="btn btn-sm btn-outline-primary btn-icon"><i class="bi bi-pencil"></i> Edit</a>
+{% endblock %}
+
+{% block content %}
+<div class="row g-3">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-body">
+        <div class="d-flex align-items-center gap-3 mb-4">
+          <div class="avatar-circle" style="width:56px;height:56px;font-size:1.3rem;">{{ student.full_name[0]|upper }}</div>
+          <div>
+            <div class="fw-semibold fs-5">{{ student.full_name }}</div>
+            <div class="text-muted-sm mono">{{ student.roll_number }}</div>
+          </div>
+          <div class="ms-auto">{{ status_badge(student.status) }}</div>
+        </div>
+        <dl class="row mb-0">
+          <dt class="col-sm-4 text-muted">Email</dt><dd class="col-sm-8 text-break">{{ student.email }}</dd>
+          <dt class="col-sm-4 text-muted">Phone</dt><dd class="col-sm-8">{{ student.phone }}</dd>
+          <dt class="col-sm-4 text-muted">Course</dt><dd class="col-sm-8">{{ student.course }}</dd>
+          <dt class="col-sm-4 text-muted">Academic year</dt><dd class="col-sm-8">{{ student.academic_year }}</dd>
+          <dt class="col-sm-4 text-muted">Admission date</dt><dd class="col-sm-8">{{ student.admission_date|date }}</dd>
+          <dt class="col-sm-4 text-muted">Emergency contact</dt><dd class="col-sm-8">{{ student.emergency_contact or '—' }}</dd>
+          <dt class="col-sm-4 text-muted">Address</dt><dd class="col-sm-8">{{ student.address or '—' }}</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-header">Fee status</div>
+      <div class="card-body">
+        <div class="d-flex justify-content-between"><span class="text-muted-sm">Outstanding</span><strong>{{ student.outstanding_balance|money }}</strong></div>
+        <div class="d-flex justify-content-between mt-2"><span class="text-muted-sm">Status</span>{{ status_badge(student.fee_status) }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

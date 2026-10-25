@@ -1,0 +1,52 @@
+{% extends "layouts/dashboard.html" %}
+{% from "macros.html" import render_field %}
+
+{% block title %}{{ 'Edit' if student else 'New' }} student — Hostel MS{% endblock %}
+{% block page_title %}{{ 'Edit student' if student else 'New student' }}{% endblock %}
+{% block page_subtitle %}{{ student.full_name if student else 'Create a student record' }}{% endblock %}
+
+{% block content %}
+<div class="row g-3">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-body">
+        <form method="post" novalidate>
+          {{ form.hidden_tag() }}
+          <div class="row g-3">
+            {{ render_field(form.full_name, col="col-md-6") }}
+            {{ render_field(form.roll_number, col="col-md-6") }}
+            {{ render_field(form.email, col="col-md-6") }}
+            {{ render_field(form.phone, col="col-md-6") }}
+            {{ render_field(form.course, col="col-md-8") }}
+            {{ render_field(form.academic_year, col="col-md-4") }}
+            {{ render_field(form.address, col="col-12") }}
+            {{ render_field(form.emergency_contact, col="col-md-6") }}
+            {{ render_field(form.admission_date, col="col-md-6") }}
+            {{ render_field(form.status, col="col-md-6") }}
+          </div>
+          <hr>
+          <h6 class="section-title">Portal login</h6>
+          <p class="text-muted-sm">Optionally create or reset the student's self-service login.</p>
+          <div class="row g-3">
+            {{ render_field(form.create_login, col="col-md-4") }}
+            {{ render_field(form.password, col="col-md-8", help_text="Required if creating a new login. Leave blank to keep the current password.") }}
+          </div>
+          <div class="d-flex gap-2 mt-3">
+            {{ form.submit(class="btn btn-primary") }}
+            <a href="{{ url_for('students.view_student', student_id=student.id) if student else url_for('students.list_students') }}" class="btn btn-outline-secondary">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-header">Guidance</div>
+      <div class="card-body text-muted-sm">
+        <p>Roll numbers and emails must be unique across all students.</p>
+        <p class="mb-0">Deactivating a student releases their bed but preserves all financial and allocation history.</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,55 @@
+{% extends "layouts/dashboard.html" %}
+{% from "macros.html" import status_badge, empty_state %}
+
+{% block title %}My room — Hostel MS{% endblock %}
+{% block page_title %}My room{% endblock %}
+{% block page_subtitle %}Current allocation and history{% endblock %}
+
+{% block content %}
+<div class="row g-3">
+  <div class="col-lg-5">
+    <div class="card h-100">
+      <div class="card-header">Current allocation</div>
+      <div class="card-body">
+        {% if current %}
+          <div class="fw-semibold fs-4">{{ current.room.room_number }}</div>
+          <div class="text-muted-sm mb-3">{{ current.room.hostel.name }} · Floor {{ current.room.floor }}</div>
+          <dl class="row mb-0 small">
+            <dt class="col-5 text-muted">Room type</dt><dd class="col-7">{{ current.room.room_type|title }}</dd>
+            <dt class="col-5 text-muted">Bed</dt><dd class="col-7">{{ current.bed_index }}</dd>
+            <dt class="col-5 text-muted">Allocated</dt><dd class="col-7">{{ current.allocated_at|date }}</dd>
+            <dt class="col-5 text-muted">Occupancy</dt><dd class="col-7">{{ current.room.occupied_beds }}/{{ current.room.capacity }}</dd>
+            <dt class="col-5 text-muted">Monthly fee</dt><dd class="col-7">{{ current.room.base_fee|money }}</dd>
+            <dt class="col-5 text-muted">Amenities</dt><dd class="col-7">{{ current.room.amenities or '—' }}</dd>
+          </dl>
+        {% else %}
+          {{ empty_state('door-closed', 'No active allocation', 'The hostel office will assign you a room.') }}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-7">
+    <div class="card h-100">
+      <div class="card-header">Allocation history</div>
+      <div class="table-responsive">
+        <table class="table table-sm align-middle">
+          <thead><tr><th>Room</th><th>Bed</th><th>From</th><th>To</th><th>Status</th></tr></thead>
+          <tbody>
+            {% for a in history %}
+            <tr>
+              <td>{{ a.room.room_number if a.room }} <span class="text-muted-sm">{{ a.room.hostel.name if a.room and a.room.hostel }}</span></td>
+              <td>{{ a.bed_index }}</td>
+              <td>{{ a.allocated_at|date }}</td>
+              <td>{{ a.released_at|date if a.released_at else '—' }}</td>
+              <td>{{ status_badge(a.status) }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5">{{ empty_state('diagram-3', 'No history yet') }}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
